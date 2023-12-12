@@ -200,19 +200,24 @@ def insert_name(message):
     bot.send_message(chat_id, 'Пожалуйста выберите следующее действие:', reply_markup=keyboard)
 
 def reserve_table(message):
-    table_number = message.text
-    if not is_valid_table_number(table_number):
-        bot.send_message(message.chat.id, text="Введите корректный номер стола от 1 до 10.")
-    elif is_table_reserved(table_number):
-        bot.send_message(message.chat.id, text="Стол уже занят.")
-    else:
-        username = get_username(message.from_user.id)
-        if username:
-            cursor.execute("UPDATE tables SET is_reserved = TRUE, reserved_by = %s WHERE table_number = %s", (username, message.text))
-            conn.commit()
-            bot.send_message(message.chat.id, text=f"Стол {message.text} забронирован для пользователя {username}.")
+    table_number_str = message.text
+    try:
+        table_number = int(table_number_str)
+        if not is_valid_table_number(table_number):
+            bot.send_message(message.chat.id, text="Введите корректный номер стола от 1 до 10.")
+        elif is_table_reserved(table_number):
+            bot.send_message(message.chat.id, text="Стол уже занят.")
         else:
-            bot.send_message(message.chat.id, text="Что-то пошло не так. Пожалуйста, попробуйте еще раз.")
+            username = get_username(message.from_user.id)
+            if username:
+                cursor.execute("UPDATE tables SET is_reserved = TRUE, reserved_by = %s WHERE table_number = %s", (username, table_number))
+                conn.commit()
+                bot.send_message(message.chat.id, text=f"Стол {table_number} забронирован для пользователя {username}.")
+            else:
+                bot.send_message(message.chat.id, text="Что-то пошло не так. Пожалуйста, попробуйте еще раз.")
+    except ValueError:
+        bot.send_message(message.chat.id, text="Введите корректное число для номера стола.")
+
 
 def get_username(user_id):
     cursor.execute("SELECT username FROM users WHERE user_id = %s", (user_id,))
@@ -220,19 +225,24 @@ def get_username(user_id):
     return result[0] if result else None
 
 def reserve_vip_room(message):
-    room_number = message.text
-    if not is_valid_vip_room_number(room_number):
-        bot.send_message(message.chat.id, text="Введите корректный номер VIP-кабинки от 1 до 10.")
-    elif is_vip_room_reserved(room_number):
-        bot.send_message(message.chat.id, text="VIP-кабинка уже занята.")
-    else:
-        username = get_username(message.from_user.id)
-        if username:
-            cursor.execute("UPDATE vip_rooms SET is_reserved = TRUE, reserved_by = %s WHERE room_number = %s", (username, message.text))
-            conn.commit()
-            bot.send_message(message.chat.id, text=f"Кабинка {message.text} забронирована для пользователя {username}.")
+    room_number_str = message.text
+    try:
+        room_number = int(room_number_str)
+        if not is_valid_vip_room_number(room_number):
+            bot.send_message(message.chat.id, text="Введите корректный номер VIP-кабинки от 1 до 10.")
+        elif is_vip_room_reserved(room_number):
+            bot.send_message(message.chat.id, text="VIP-кабинка уже занята.")
         else:
-            bot.send_message(message.chat.id, text="Что-то пошло не так. Пожалуйста, попробуйте еще раз.")
+            username = get_username(message.from_user.id)
+            if username:
+                cursor.execute("UPDATE vip_rooms SET is_reserved = TRUE, reserved_by = %s WHERE room_number = %s", (username, room_number))
+                conn.commit()
+                bot.send_message(message.chat.id, text=f"Кабинка {room_number} забронирована для пользователя {username}.")
+            else:
+                bot.send_message(message.chat.id, text="Что-то пошло не так. Пожалуйста, попробуйте еще раз.")
+    except ValueError:
+        bot.send_message(message.chat.id, text="Введите корректное число для номера VIP-кабинки.")
+
 
 def is_valid_table_number(table_number):
     return 1 <= int(table_number) <= 10
